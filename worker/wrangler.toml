@@ -10,12 +10,12 @@ compatibility_date = "2025-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "masir-man-db"
-database_id = "PUT-YOUR-D1-DATABASE-ID-HERE"
+database_id = "5ad29e81-7a22-417f-8c22-f5e57c3e970d"
 migrations_dir = "migrations"
 
 [vars]
 # آدرس(های) سایت که اجازه‌ی صحبت با API را دارند؛ با ویرگول جدا کن. بدون / در انتها
-ALLOWED_ORIGINS = "https://YOUR-USERNAME.github.io"
+ALLOWED_ORIGINS = "https://bestappone.github.io"
 SESSION_DAYS = "7"
 
 # Secrets (با دستور یا از داشبورد ساخته می‌شوند، نه اینجا):
