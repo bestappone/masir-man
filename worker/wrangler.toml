@@ -1,0 +1,23 @@
+# ============================================================
+#  تنظیمات Worker «مسیر من»
+#  ⚠️ فقط دو مقدار را باید عوض کنی: database_id و ALLOWED_ORIGINS
+#  هیچ رمزی در این فایل نوشته نمی‌شود (رمزها در Cloudflare > Secrets)
+# ============================================================
+name = "masir-man-api"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "masir-man-db"
+database_id = "PUT-YOUR-D1-DATABASE-ID-HERE"
+migrations_dir = "migrations"
+
+[vars]
+# آدرس(های) سایت که اجازه‌ی صحبت با API را دارند؛ با ویرگول جدا کن. بدون / در انتها
+ALLOWED_ORIGINS = "https://YOUR-USERNAME.github.io"
+SESSION_DAYS = "7"
+
+# Secrets (با دستور یا از داشبورد ساخته می‌شوند، نه اینجا):
+#   SETUP_KEY (لازم برای راه‌اندازی؛ پس از ساخت مدیر حذفش کن)  ← کلید یک‌بارمصرف ساخت اولین مدیر
+#   AI_API_KEY ← (اختیاری) کلید سرویس هوش مصنوعی

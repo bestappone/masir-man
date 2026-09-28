@@ -1,0 +1,14 @@
+{
+  "name": "masir-man-api",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply masir-man-db --remote",
+    "db:migrate:local": "wrangler d1 migrations apply masir-man-db --local",
+    "test": "cd .. && node --experimental-sqlite --no-warnings tests/api.test.mjs",
+    "seed:build": "cd .. && python3 tools/build_seed.py"
+  }
+}
