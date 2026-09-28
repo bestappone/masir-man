@@ -4,6 +4,6 @@
 //  مثال: https://masir-man-api.my-account.workers.dev
 // ============================================================
 window.MM_CONFIG = {
-  API_BASE: 'https://masir-man-api.YOUR-ACCOUNT.workers.dev',
+  API_BASE: 'https://masir-man-api.estedad14001410.workers.dev',
   SITE_NAME_FALLBACK: 'مسیر من',
 };
