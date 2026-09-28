@@ -260,8 +260,8 @@
         if (!r.ro) a.push(MM.btn('حذف', async () => { if (await MM.confirm('این مورد حذف شود؟ این کار قابل بازگشت نیست.')) { try { await MM.del(`/api/admin/${r.key}/${enc(id)}`); MM.toast('حذف شد.'); await load(); } catch (e) { MM.err(e); } } }, 'sm danger'));
         return h('div', { class: 'row' }, a);
       };
-      MM.mount(tableBox, items.length ? h('div', { class: 'tbl-wrap' }, h('table', { class: 'tbl' }, h('thead', null, h('tr', null, cols.map(c => h('th', null, L(c))), h('th', null, ''))),
-        h('tbody', null, items.map(row => h('tr', null, cols.map(c => h('td', { title: String(row[c] ?? '') }, cell(row, c))), h('td', { class: 'act' }, act(row))))))) : MM.empty('موردی پیدا نشد'));
+      MM.mount(tableBox, items.length ? h('div', { class: 'tbl-wrap' }, h('table', { class: 'tbl' }, h('thead', null, h('tr', null, h('th', null, 'عملیات'), cols.map(c => h('th', null, L(c))))),
+        h('tbody', null, items.map(row => h('tr', null, h('td', { class: 'act' }, act(row)), cols.map(c => h('td', { title: String(row[c] ?? '') }, cell(row, c)))))))) : MM.empty('موردی پیدا نشد'));
       const pages = Math.max(1, Math.ceil(d.total / 25));
       MM.mount(pager, h('span', { class: 'muted small' }, MM.fa(d.total) + ' مورد • صفحه‌ی ' + MM.fa(st.page) + ' از ' + MM.fa(pages)), st.page > 1 ? MM.btn('قبلی', () => { st.page--; load().catch(MM.err); }, 'sm') : null, st.page < pages ? MM.btn('بعدی', () => { st.page++; load().catch(MM.err); }, 'sm') : null);
     };
@@ -273,7 +273,8 @@
         : h('input', { placeholder: L(k), 'aria-label': L(k), class: 'ltr', style: 'width:8rem', value: st.f[k] ?? '', onchange: (e) => { st.f[k] = e.target.value.trim(); st.page = 1; load().catch(MM.err); } });
       bar.appendChild(ctl);
     });
-    wrap.appendChild(h('div', { class: 'row between' }, h('h1', null, r.label), h('div', { class: 'row' }, r.key === 'users' ? MM.link('افزودن کاربر/کارمند', '#/staff-new', 'btn primary sm') : null, !r.ro && !r.noCreate ? MM.link('افزودن', `#/r/${r.key}/new`, 'btn primary sm') : null)), bar, tableBox, pager);
+    wrap.appendChild(h('div', { class: 'row between' }, h('h1', null, r.label), h('div', { class: 'row' }, r.key === 'users' ? MM.link('افزودن کاربر/کارمند', '#/staff-new', 'btn primary sm') : null, !r.ro && !r.noCreate ? MM.link('افزودن', `#/r/${r.key}/new`, 'btn primary sm') : null)));
+    wrap.appendChild(bar); wrap.appendChild(tableBox); wrap.appendChild(pager);
     await load(); return wrap;
   });
 
