@@ -3,6 +3,15 @@ import { all, first, run, batch, multiInsert, getSettings, parseJson, tehranToda
 import { requireUser } from '../lib/auth.js';
 import { cleanFields, need } from '../lib/validate.js';
 import { rateLimit } from '../lib/limits.js';
+import { hasAccess } from './purchases.js';
+
+async function requireFeatureAccess(env, u, key) {
+  const f = await first(env, 'SELECT is_paid, price FROM paid_features WHERE feature_key=?', key);
+  if (f && f.is_paid && !(await hasAccess(env, u.id, 'feature:' + key))) {
+    const e = new HttpError(402, `این قابلیت پولی است (${f.price.toLocaleString('en-US')} تومان)؛ ابتدا آن را بخر.`);
+    e.price = f.price; throw e;
+  }
+}
 
 const DEFAULT_RULES = { horizon_days: 28, max_subjects_per_day: 3, min_block_minutes: 20, round_to: 5, weak_weight: { 1: 3, 2: 2.2, 3: 1.5, 4: 1, 5: 0.6 }, review_task_every_days: 7, review_minutes: 30 };
 
@@ -67,6 +76,7 @@ function range(examDate, horizon) {
 
 export async function createStudyPlan(ctx) {
   const u = requireUser(ctx); await rateLimit(ctx.env, `plan:${u.id}`, 20, 3600);
+  await requireFeatureAccess(ctx.env, u, 'study_plan');
   const b = await ctx.body();
   const base = cleanFields(b, { grade: 't', field_name: 't', goal: 't', exam_date: 'd' });
   const subjects = parseSubjects(b.subjects); const studyDays = parseDays(b.study_days);
@@ -81,6 +91,7 @@ export async function createStudyPlan(ctx) {
 
 export async function createExamPlan(ctx) {
   const u = requireUser(ctx); await rateLimit(ctx.env, `plan:${u.id}`, 20, 3600);
+  await requireFeatureAccess(ctx.env, u, 'study_plan');
   const b = await ctx.body();
   const base = cleanFields(b, { grade: 't', field_name: 't', target: 't', exam_date: 'd!', current_status: 'x' });
   const subjects = parseSubjects(b.subjects); const studyDays = parseDays(b.study_days);

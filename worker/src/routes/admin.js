@@ -186,3 +186,19 @@ export async function adminUserSummary(ctx) {
   ]);
   if (!u) throw new HttpError(404, 'پیدا نشد.'); return json({ user: u, profile: prof, tests: res.n, goals: goals.n, requests: reqs.n });
 }
+
+// ---------- به‌روزرسانی‌های افزایشی دیتابیس (فقط مدیر) ----------
+export async function migrationsStatus(ctx) {
+  requireRole(ctx, ['admin']);
+  const { migrationStatus } = await import('../lib/upgrades.js');
+  return json({ items: await migrationStatus(ctx.env) });
+}
+export async function migrationsRun(ctx) {
+  requireRole(ctx, ['admin']);
+  const b = await ctx.body();
+  const { runMigration } = await import('../lib/upgrades.js');
+  const out = await runMigration(ctx.env, String(b.name || ''));
+  if (!out.ok) throw new HttpError(500, out.error || 'اجرای به‌روزرسانی ناموفق بود.');
+  await audit(ctx.env, ctx, 'migration_run', 'schema_migrations', 0, String(b.name || ''));
+  return json(out);
+}

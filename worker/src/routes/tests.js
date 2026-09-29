@@ -2,14 +2,18 @@ import { HttpError, json } from '../lib/http.js';
 import { all, first, run, batch, prep, multiInsert, parseJson, csv, qmarks } from '../lib/db.js';
 import { requireUser } from '../lib/auth.js';
 import { rateLimit } from '../lib/limits.js';
+import { hasAccess } from './purchases.js';
 
 export async function getTest(ctx) {
-  const t = await first(ctx.env, 'SELECT id, slug, title, description, kind, est_minutes, level, science_note, result_note FROM tests WHERE slug=? AND is_published=1', ctx.params.slug);
+  const t = await first(ctx.env, 'SELECT id, slug, title, description, kind, est_minutes, level, science_note, result_note, is_paid, price FROM tests WHERE slug=? AND is_published=1', ctx.params.slug);
   if (!t) throw new HttpError(404, 'تست پیدا نشد.');
+  let locked = false;
+  if (t.is_paid) { const u = ctx.user; locked = !u || !(await hasAccess(ctx.env, u.id, 'test:' + t.slug)); }
+  if (locked) return json({ test: t, locked: true, questions: [] });
   const qs = await all(ctx.env, 'SELECT id, category_code, q_text, level FROM questions WHERE test_id=? AND is_active=1 ORDER BY sort_order, id', t.id);
   const opts = qs.length ? await all(ctx.env, `SELECT id, question_id, o_text FROM options WHERE question_id IN (SELECT id FROM questions WHERE test_id=? AND is_active=1) ORDER BY sort_order, id`, t.id) : [];
   const by = {}; for (const o of opts) (by[o.question_id] ||= []).push({ id: o.id, text: o.o_text });
-  return json({ test: t, questions: qs.map(q => ({ id: q.id, text: q.q_text, level: q.level, options: by[q.id] || [] })) });
+  return json({ test: t, locked: false, questions: qs.map(q => ({ id: q.id, text: q.q_text, level: q.level, options: by[q.id] || [] })) });
 }
 
 export async function submitTest(ctx) {
@@ -17,6 +21,7 @@ export async function submitTest(ctx) {
   await rateLimit(ctx.env, `submit:${u.id}`, 20, 3600);
   const t = await first(ctx.env, 'SELECT * FROM tests WHERE slug=? AND is_published=1', ctx.params.slug);
   if (!t) throw new HttpError(404, 'تست پیدا نشد.');
+  if (t.is_paid && !(await hasAccess(ctx.env, u.id, 'test:' + t.slug))) throw new HttpError(402, 'این آزمون پولی است؛ ابتدا آن را از صفحه‌ی آزمون بخر.');
   const b = await ctx.body();
   const answers = b.answers;
   if (!answers || typeof answers !== 'object' || Array.isArray(answers)) throw new HttpError(400, 'پاسخ‌ها نامعتبر است.');
