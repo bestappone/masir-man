@@ -25,7 +25,7 @@ export const LABELS = {
 const CONTENT = 'content';
 export const RES = {
   tests: { label: 'تست‌ها', group: CONTENT, table: 'tests', title: 'title', search: ['title', 'slug'], order: 'sort_order, id', pub: 'is_published',
-    fields: { slug: 's!', title: 't!', description: 'x', kind: 'e:likert|ability', est_minutes: 'i', level: 't', science_note: 'x', result_note: 'x', is_published: 'b', sort_order: 'i' } },
+    fields: { slug: 's!', title: 't!', description: 'x', kind: 'e:likert|ability', est_minutes: 'i', level: 't', science_note: 'x', result_note: 'x', is_paid: 'b', price: 'i', is_published: 'b', sort_order: 'i' } },
   test_categories: { label: 'دسته‌بندی نتیجه‌ی تست', group: CONTENT, table: 'test_categories', title: 'title', search: ['title', 'code'], order: 'test_id, sort_order, id', filters: ['test_id'],
     fields: { test_id: 'i!', code: 't!', title: 't!', description: 'x', suggested_majors: 't', suggested_jobs: 't', suggested_skills: 't', next_action: 'x', sort_order: 'i' } },
   questions: { label: 'سؤال‌ها', group: CONTENT, table: 'questions', title: 'q_text', search: ['q_text'], order: 'test_id, sort_order, id', filters: ['test_id', 'category_code'],
@@ -68,6 +68,8 @@ export const RES = {
     fields: { code: 't!', user_id: 'i', percent: 'i!', kind: 'e:manual|referral_inviter|referral_invitee', is_used: 'b', expires_at: 'd' } },
   site_settings: { label: 'تنظیمات سایت', group: 'admin', table: 'site_settings', pk: 'setting_key', title: 'setting_key', search: ['setting_key', 'label'], order: 'group_name, setting_key',
     fields: { setting_key: 's!', setting_value: 'X', group_name: 't', label: 't', is_public: 'b' } },
+  paid_features: { label: 'ویژگی‌های پولی (غیر از آزمون)', group: 'admin', table: 'paid_features', pk: 'feature_key', title: 'title', order: 'feature_key', noCreate: true,
+    fields: { feature_key: 's!', title: 't!', is_paid: 'b', price: 'i' } },
   payment_settings: { label: 'تنظیمات پرداخت (کارت‌به‌کارت)', group: 'admin', table: 'payment_settings', title: 'card_owner', order: 'id', single: true,
     fields: { card_number: 't', card_owner: 't', bank_name: 't', instructions: 'x', rules: 'x', min_amount: 'i', max_amount: 'i', receipt_required: 'b' } },
   ai_settings: { label: 'تنظیمات مشاور AI', group: 'admin', table: 'ai_settings', title: 'provider_name', order: 'id', single: true,

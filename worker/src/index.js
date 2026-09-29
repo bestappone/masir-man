@@ -10,6 +10,7 @@ import * as Svc from './routes/services.js';
 import * as AI from './routes/ai.js';
 import * as Admin from './routes/admin.js';
 import * as Setup from './routes/setup.js';
+import * as Purchases from './routes/purchases.js';
 
 const routes = [];
 const add = (method, path, handler) => {
@@ -19,6 +20,7 @@ const add = (method, path, handler) => {
 const G = (p, h) => add('GET', p, h), P = (p, h) => add('POST', p, h), U = (p, h) => add('PUT', p, h), D = (p, h) => add('DELETE', p, h);
 
 G('/api/setup/status', Setup.status); P('/api/setup/init-db', Setup.initDb);
+G('/api/admin/migrations', Admin.migrationsStatus); P('/api/admin/migrations/run', Admin.migrationsRun);
 G('/api/health', async (c) => { await c.env.DB.prepare('SELECT 1').first(); return json({ ok: true, time: new Date().toISOString() }); });
 // احراز هویت
 P('/api/auth/register', Auth.register); P('/api/auth/login', Auth.login); P('/api/auth/logout', Auth.logout);
@@ -34,8 +36,10 @@ G('/api/categories/:table', Pub.categories);
 G('/api/providers', Pub.providers); G('/api/providers/:id', Pub.providerDetail); G('/api/providers/:id/slots', Pub.providerSlots);
 G('/api/packages', Pub.packages); G('/api/payment-info', Pub.paymentInfo); G('/api/suggestions', Me.suggestions);
 // تست‌ها
-G('/api/tests', async (c) => { const { all } = await import('./lib/db.js'); return json({ items: await all(c.env, "SELECT t.slug, t.title, t.description, t.kind, t.est_minutes, t.level, (SELECT COUNT(*) FROM questions q WHERE q.test_id=t.id AND q.is_active=1) questions FROM tests t WHERE t.is_published=1 ORDER BY t.sort_order, t.id") }); });
+G('/api/tests', async (c) => { const { all } = await import('./lib/db.js'); return json({ items: await all(c.env, "SELECT t.slug, t.title, t.description, t.kind, t.est_minutes, t.level, t.is_paid, t.price, (SELECT COUNT(*) FROM questions q WHERE q.test_id=t.id AND q.is_active=1) questions FROM tests t WHERE t.is_published=1 ORDER BY t.sort_order, t.id") }); });
 G('/api/tests/:slug', Tests.getTest); P('/api/tests/:slug/submit', Tests.submitTest);
+G('/api/paid-features', async (c) => { const { all } = await import('./lib/db.js'); return json({ items: await all(c.env, 'SELECT feature_key, title, is_paid, price FROM paid_features') }); });
+P('/api/purchases', Purchases.createPurchase); G('/api/purchases/mine', Purchases.myPurchases);
 G('/api/my/results', Tests.myResults); G('/api/my/results/:id', Tests.myResult); D('/api/my/results/:id', Tests.deleteResult);
 // برنامه‌ریزی
 P('/api/plans/study', Plan.createStudyPlan); P('/api/plans/exam', Plan.createExamPlan); G('/api/plans', Plan.listPlans);
