@@ -25,7 +25,7 @@
     const link = (href, text) => h('a', { href }, text);
     const list = (arr) => arr.map(r => link('#/r/' + r.key, r.label));
     MM.mount(side,
-      h('h4', null, 'عمومی'), link('#/', '📊 داشبورد'), link('#/queue', '✅ صف بررسی'), link('#/setup', '🛠 راه‌اندازی دیتابیس'),
+      h('h4', null, 'عمومی'), link('#/', '📊 داشبورد'), link('#/queue', '✅ صف بررسی'), link('#/setup', '🛠 راه‌اندازی دیتابیس'), link('#/upgrade', '⬆️ به‌روزرسانی دیتابیس'),
       h('a', { href: '../' }, '↗ مشاهده‌ی سایت'),
       h('h4', null, 'محتوا'), list(rs.filter(r => r.group === 'content')),
       h('h4', null, 'خدمات و مشاوره'), list(by(SERVICES)),
@@ -64,8 +64,11 @@
   // ---------- داشبورد ----------
   page('/', 'داشبورد', async () => {
     const s = await MM.get('/api/admin/stats');
+    let pendingUpgrades = [];
+    if (META.role === 'admin') { try { pendingUpgrades = (await MM.get('/api/admin/migrations')).items.filter(x => !x.applied); } catch { /* نسخه‌ی قدیمی‌تر بک‌اند */ } }
     const K = (n, t, href, alert) => h('a', { class: 'kpi' + (alert && n ? ' alert' : ''), href }, h('b', null, MM.fa(n)), t);
     return h('div', { class: 'page' }, h('h1', null, 'داشبورد'),
+      pendingUpgrades.length ? h('div', { class: 'notice warn' }, '⬆️ ', h('strong', null, MM.fa(pendingUpgrades.length) + ' به‌روزرسانی'), ' برای دیتابیس آماده است: ', pendingUpgrades.map(u => u.title).join('، '), ' — ', h('a', { href: '#/upgrade' }, 'اجرا کن')) : null,
       h('div', { class: 'kpis' }, K(s.pendingProviders, 'مشاور/متخصص در انتظار تأیید', '#/queue', true), K(s.pendingPayments, 'پرداخت در انتظار بررسی', '#/queue', true), K(s.activeRequests, 'درخواست فعال', '#/r/consultation_requests'),
         K(s.users, 'کاربران', '#/r/users'), K(s.providers, 'مشاوران تأییدشده', '#/r/providers'), K(s.tests, 'آزمون‌ها', '#/r/tests'), K(s.majors, 'رشته‌ها', '#/r/majors'), K(s.jobs, 'مشاغل', '#/r/jobs'),
         K(s.articles, 'مقاله‌ها', '#/r/articles'), K(s.resources, 'منابع', '#/r/resources'), K(s.programs, 'برنامه‌ی کوچینگ فعال', '#/r/coaching_programs'), K(s.goals, 'هدف‌های ثبت‌شده', '#/r/goals')),
@@ -75,6 +78,17 @@
         h('li', null, h('a', { href: '#/r/ai_settings' }, 'دستیار هوش مصنوعی'), ' را در صورت نیاز فعال کن (به‌صورت پیش‌فرض خاموش است).'),
         h('li', null, 'مشاوران نمونه را از ', h('a', { href: '#/r/providers' }, 'فهرست مشاوران'), ' بررسی و در صورت لزوم حذف یا ویرایش کن.'),
         h('li', null, 'بنر تبلیغاتی صفحه‌ی اصلی را از ', h('a', { href: '#/r/banners' }, 'بنرها'), ' روشن یا خاموش کن.'))));
+  });
+
+  // ---------- به‌روزرسانی دیتابیس (برای سایت‌هایی که قبلاً راه‌اندازی شده‌اند) ----------
+  page('/upgrade', 'به‌روزرسانی دیتابیس', async () => {
+    if (META.role !== 'admin') return h('div', { class: 'page' }, h('h1', null, 'به‌روزرسانی دیتابیس'), h('p', { class: 'notice warn' }, 'فقط مدیر به این بخش دسترسی دارد.'));
+    const items = (await MM.get('/api/admin/migrations')).items;
+    const row = (u) => MM.card('', h('div', { class: 'row between' }, h('div', null, h('strong', null, u.title), h('p', { class: 'small muted mono' }, u.name)),
+      u.applied ? MM.badge('انجام‌شده ✓', 'good') : MM.btn('اجرا', (e) => MM.busy(e.target, async () => { await MM.post('/api/admin/migrations/run', { name: u.name }); MM.toast('انجام شد.'); MM.navigate(); }), 'primary')));
+    return h('div', { class: 'page narrow' }, h('h1', null, '⬆️ به‌روزرسانی دیتابیس'),
+      h('p', { class: 'muted' }, 'وقتی نسخه‌ی جدیدی از کد سایت را جایگزین کردی، اگر تغییری در ساختار دیتابیس لازم باشد، اینجا نشان داده می‌شود. اجرای هرکدام امن است و داده‌های موجود را پاک نمی‌کند؛ می‌توانی چند بار هم روی «اجرا» بزنی.'),
+      items.length ? items.map(row) : MM.empty('چیزی برای به‌روزرسانی نیست.'));
   });
 
   // ---------- صف بررسی ----------
