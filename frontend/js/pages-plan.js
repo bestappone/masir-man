@@ -45,6 +45,23 @@
       isExam && x.days_left !== null ? h('p', null, `⏰ ${MM.fa(x.days_left)} روز تا آزمون (${MM.dateOnly(x.exam_date)})`) : null, MM.progress(x.progress.percent, `پیشرفت: ${MM.fa(x.progress.percent)}٪ (${MM.fa(x.progress.done)} از ${MM.fa(x.progress.total)})`))) : MM.card('', h('p', { class: 'muted' }, 'هنوز برنامه‌ای نساخته‌ای. از فرم زیر شروع کن.')));
     };
     wrap.appendChild(list); await loadPlans(); wrap.appendChild(tasksBox); loadTasks().catch(MM.err);
+    // آیا ساخت برنامه پولی است؟
+    let feature = null, purchase = null;
+    try {
+      const feats = await MM.get('/api/paid-features'); feature = feats.items.find(x => x.feature_key === 'study_plan');
+      if (feature && feature.is_paid && MM.token()) { const mine = await MM.get('/api/purchases/mine').catch(() => ({ items: [] })); purchase = mine.items.find(x => x.product_key === 'feature:study_plan'); }
+    } catch { /* اگر تنظیم نشده بود، ساخت برنامه رایگان می‌ماند */ }
+    if (feature && feature.is_paid && !(purchase && ['approved', 'active', 'completed'].includes(purchase.status))) {
+      wrap.appendChild(MM.card('', h('h2', null, '🔒 ساخت برنامه‌ی جدید'), h('div', { class: 'notice warn' }, 'ساخت برنامه یک ویژگی پولی است — ', h('strong', null, MM.money(feature.price)), '.'),
+        !MM.token() ? MM.btn('ورود برای خرید', () => { sessionStorage.setItem('mm_after', location.hash); MM.go('/login'); }, 'primary')
+          : purchase && purchase.status === 'payment_submitted' ? h('p', { class: 'notice' }, 'پرداخت ثبت شده و در انتظار تأیید مدیر است.')
+          : MM.btn(purchase ? 'ادامه‌ی پرداخت' : 'خرید این ویژگی', (e) => MM.busy(e.target, async () => {
+              let r = purchase;
+              if (!r) r = await MM.post('/api/purchases', { product_key: 'feature:study_plan' });
+              if (r.final_amount > 0) MM.paymentModal(r.id, r.final_amount, () => MM.navigate()); else { MM.toast('باز شد!'); MM.navigate(); }
+            }), 'primary')));
+      return wrap;
+    }
     // فرم ساخت برنامه
     const grades = MM.parse(MM.S('grades', '[]'), []); const fields = MM.parse(MM.S('fields', '[]'), []);
     const se = subjectsEditor(null, isExam ? 'درس‌های ضعیف (۱ و ۲) بیشتر وقت می‌گیرند و درس‌های قوی (۴ و ۵) مرور می‌شوند.' : 'سطح ضعیف‌تر، زمان بیشتر.'); const dp = daysPicker(isExam ? [6, 0, 1, 2, 3, 4] : [6, 0, 1, 2, 3]);

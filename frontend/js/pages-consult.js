@@ -24,25 +24,7 @@
   }
 
   // ---------- پرداخت ----------
-  async function paymentModal(req) {
-    let info; try { info = (await MM.get('/api/payment-info')).payment || {}; } catch (e) { return MM.err(e); }
-    const f = h('form', { class: 'stack', onsubmit: (e) => e.preventDefault() },
-      h('div', { class: 'card flat' },
-        h('p', null, 'مبلغ قابل پرداخت: ', h('strong', null, MM.money(req.final_amount))),
-        info.card_number ? h('p', null, 'شماره کارت: ', h('strong', { dir: 'ltr', class: 'mono' }, info.card_number)) : h('p', { class: 'muted' }, 'اطلاعات کارت هنوز توسط مدیر ثبت نشده است.'),
-        info.card_owner ? h('p', null, 'به نام: ', h('strong', null, info.card_owner), info.bank_name ? ' (' + info.bank_name + ')' : '') : null,
-        info.instructions ? MM.richText(info.instructions) : null,
-        info.rules ? h('details', null, h('summary', null, 'قوانین پرداخت'), MM.richText(info.rules)) : null),
-      MM.field('مبلغ واریزشده (تومان)', h('input', { name: 'amount', type: 'number', inputmode: 'numeric', required: true, value: req.final_amount || '' })),
-      MM.field('شماره پیگیری', h('input', { name: 'tracking_code', required: true, maxlength: 40, dir: 'ltr' })),
-      MM.field('لینک تصویر رسید' + (info.receipt_required ? ' (الزامی)' : ' (اختیاری)'), h('input', { name: 'receipt_url', type: 'url', dir: 'ltr', placeholder: 'https://', required: !!info.receipt_required }), 'تصویر را در یک سرویس اشتراک‌گذاری بارگذاری و لینک آن را اینجا بگذار.'));
-    const m = MM.modal('ثبت پرداخت کارت‌به‌کارت', f, [
-      MM.btn('ثبت پرداخت', (e) => MM.busy(e.target, async () => {
-        const d = MM.formData(f); if (!d.amount || !d.tracking_code) throw new Error('مبلغ و شماره پیگیری را وارد کن.');
-        await MM.post('/api/requests/' + req.id + '/payment', { amount: Number(d.amount), tracking_code: d.tracking_code, receipt_url: d.receipt_url || undefined });
-        m.close(); MM.toast('پرداخت ثبت شد و در انتظار تأیید مدیر است.'); MM.go('/requests'); MM.navigate();
-      }), 'primary'), MM.btn('بعداً', () => { m.close(); MM.go('/requests'); })]);
-  }
+  function paymentModal(req) { return MM.paymentModal(req.id, req.final_amount, () => { MM.go('/requests'); MM.navigate(); }); }
 
   // ---------- رزرو / ثبت‌نام (پولی) ----------
   function bookModal(opt) {

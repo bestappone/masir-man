@@ -112,6 +112,27 @@
   MM.bullets = (text) => { const l = MM.lines(text); return l.length ? h('ul', { class: 'bullets' }, l.map(x => h('li', null, x.replace(/^[-•*]\s*/, '')))) : null; };
   MM.tags = (csvText) => h('div', { class: 'tags' }, MM.csv(csvText).map(t => h('span', { class: 'tag' }, t)));
 
+  // مودال عمومی پرداخت کارت‌به‌کارت — برای هر درخواست/خرید با id و مبلغ نهایی؛ onDone بعد از ثبت موفق صدا زده می‌شود
+  MM.paymentModal = async function (requestId, finalAmount, onDone) {
+    let info; try { info = (await MM.get('/api/payment-info')).payment || {}; } catch (e) { return MM.err(e); }
+    const f = h('form', { class: 'stack', onsubmit: (e) => e.preventDefault() },
+      h('div', { class: 'card flat' },
+        h('p', null, 'مبلغ قابل پرداخت: ', h('strong', null, MM.money(finalAmount))),
+        info.card_number ? h('p', null, 'شماره کارت: ', h('strong', { dir: 'ltr', class: 'mono' }, info.card_number)) : h('p', { class: 'muted' }, 'اطلاعات کارت هنوز توسط مدیر ثبت نشده است.'),
+        info.card_owner ? h('p', null, 'به نام: ', h('strong', null, info.card_owner), info.bank_name ? ' (' + info.bank_name + ')' : '') : null,
+        info.instructions ? MM.richText(info.instructions) : null,
+        info.rules ? h('details', null, h('summary', null, 'قوانین پرداخت'), MM.richText(info.rules)) : null),
+      MM.field('مبلغ واریزشده (تومان)', h('input', { name: 'amount', type: 'number', inputmode: 'numeric', required: true, value: finalAmount || '' })),
+      MM.field('شماره پیگیری', h('input', { name: 'tracking_code', required: true, maxlength: 40, dir: 'ltr' })),
+      MM.field('لینک تصویر رسید' + (info.receipt_required ? ' (الزامی)' : ' (اختیاری)'), h('input', { name: 'receipt_url', type: 'url', dir: 'ltr', placeholder: 'https://', required: !!info.receipt_required }), 'تصویر را در یک سرویس اشتراک‌گذاری بارگذاری و لینک آن را اینجا بگذار.'));
+    const m = MM.modal('ثبت پرداخت کارت‌به‌کارت', f, [
+      MM.btn('ثبت پرداخت', (e) => MM.busy(e.target, async () => {
+        const d = MM.formData(f); if (!d.amount || !d.tracking_code) throw new Error('مبلغ و شماره پیگیری را وارد کن.');
+        await MM.post('/api/requests/' + requestId + '/payment', { amount: Number(d.amount), tracking_code: d.tracking_code, receipt_url: d.receipt_url || undefined });
+        m.close(); MM.toast('پرداخت ثبت شد و در انتظار تأیید مدیر است.'); onDone && onDone();
+      }), 'primary'), MM.btn('بعداً', () => m.close())]);
+  };
+
   MM.modal = function (title, body, actions) {
     const close = () => { ov.remove(); document.body.classList.remove('noscroll'); };
     const ov = h('div', { class: 'overlay', onclick: (e) => { if (e.target === ov) close(); } },

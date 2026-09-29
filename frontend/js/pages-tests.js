@@ -8,15 +8,32 @@
     if (MM.token()) mine = await MM.get('/api/my/results').catch(() => ({ items: [] }));
     const doneSlugs = new Set(mine.items.map(x => x.slug));
     return h('div', null, h('h1', null, '📝 تست‌ها'), h('p', { class: 'muted' }, 'نتیجه‌ی تست‌ها یک نقطه‌ی شروع برای فکر کردن است، نه حکم نهایی. صادقانه و بدون عجله پاسخ بده.'),
-      h('div', { class: 'grid g2' }, r.items.map(t => h('a', { class: 'tile', href: '#/tests/' + t.slug }, h('div', { class: 'row between' }, h('h3', null, t.title), doneSlugs.has(t.slug) ? MM.badge('انجام شده ✓', 'good') : null),
+      h('div', { class: 'grid g2' }, r.items.map(t => h('a', { class: 'tile', href: '#/tests/' + t.slug }, h('div', { class: 'row between' }, h('h3', null, t.title), doneSlugs.has(t.slug) ? MM.badge('انجام شده ✓', 'good') : (t.is_paid ? MM.badge('🔒 ' + MM.money(t.price), 'warn') : null)),
         h('p', { class: 'muted small' }, t.description), h('div', { class: 'tags' }, h('span', { class: 'tag' }, `${MM.fa(t.questions)} سؤال`), h('span', { class: 'tag' }, `حدود ${MM.fa(t.est_minutes)} دقیقه`), h('span', { class: 'tag' }, KIND[t.kind] || t.kind))))),
       mine.items.length ? MM.card('', h('h2', null, 'نتایج قبلی من'), mine.items.slice(0, 10).map(x => h('a', { class: 'item', href: '#/results/' + x.id }, h('div', { class: 'grow' }, h('strong', null, x.title), h('p', { class: 'muted small' }, MM.dt(x.created_at))), '‹'))) : null);
   });
 
+  async function purchaseBlock(box, test, reload) {
+    let pending = null;
+    if (MM.token()) { const mine = await MM.get('/api/purchases/mine').catch(() => ({ items: [] })); pending = mine.items.find(x => x.product_key === 'test:' + test.slug && ['pending_payment', 'payment_submitted'].includes(x.status)); }
+    MM.mount(box, MM.card('', h('h1', null, test.title), h('p', null, test.description),
+      h('div', { class: 'notice warn' }, '🔒 این آزمون پولی است — ', h('strong', null, MM.money(test.price)), '. برای شروع، ابتدا آن را بخر.'),
+      !MM.token() ? MM.btn('ورود برای خرید', () => { sessionStorage.setItem('mm_after', location.hash); MM.go('/login'); }, 'primary')
+        : pending && pending.status === 'payment_submitted' ? h('p', { class: 'notice' }, 'پرداخت ثبت شده و در انتظار تأیید مدیر است. بعد از تأیید، به همین صفحه برگرد.')
+        : MM.btn(pending ? 'ادامه‌ی پرداخت' : 'خرید و شروع', (e) => MM.busy(e.target, async () => {
+            let r = pending;
+            if (!r) r = await MM.post('/api/purchases', { product_key: 'test:' + test.slug });
+            if (r.final_amount > 0) MM.paymentModal(r.id, r.final_amount, () => MM.navigate());
+            else { MM.toast('باز شد! می‌تونی شروع کنی.'); reload(); }
+          }), 'primary'),
+      MM.link('‹ بازگشت به تست‌ها', '#/tests', 'btn sm')));
+  }
+
   MM.route('/tests/:slug', 'تست', async ({ params }) => {
-    const { test, questions } = await MM.get('/api/tests/' + params.slug);
+    let { test, questions, locked } = await MM.get('/api/tests/' + params.slug);
     const answers = {}; let idx = -1; const box = h('div');
     const saved = MM.parse(sessionStorage.getItem('mm_t_' + test.slug), {}); Object.assign(answers, saved);
+    const reload = async () => { const d = await MM.get('/api/tests/' + params.slug); test = d.test; questions = d.questions; locked = d.locked; locked ? purchaseBlock(box, test, reload) : intro(); };
     const intro = () => MM.mount(box, MM.card('', h('h1', null, test.title), h('p', null, test.description),
       h('div', { class: 'tags' }, h('span', { class: 'tag' }, `${MM.fa(questions.length)} سؤال`), h('span', { class: 'tag' }, `حدود ${MM.fa(test.est_minutes)} دقیقه`)),
       test.science_note ? h('div', { class: 'notice info' }, h('strong', null, 'مبنای علمی و محدودیت‌ها: '), test.science_note) : null,
@@ -32,7 +49,8 @@
         h('div', { class: 'row between', style: 'margin-top:1rem' }, idx > 0 ? MM.btn('قبلی', () => { idx--; show(); }) : h('span'),
           last || answered === questions.length ? MM.btn('ثبت و دیدن نتیجه', (e) => MM.busy(e.target, async () => { const r = await MM.post(`/api/tests/${test.slug}/submit`, { answers }); sessionStorage.removeItem('mm_t_' + test.slug); MM.go('/results/' + r.id); }), 'primary') : MM.btn('رد کردن', () => { idx++; show(); }))));
     };
-    intro(); return box;
+    if (locked) await purchaseBlock(box, test, reload); else intro();
+    return box;
   });
 
   MM.route('/results/:id', 'نتیجه‌ی تست', async ({ params }) => {
