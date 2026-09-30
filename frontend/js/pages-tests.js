@@ -36,7 +36,7 @@
     const reload = async () => { const d = await MM.get('/api/tests/' + params.slug); test = d.test; questions = d.questions; locked = d.locked; locked ? purchaseBlock(box, test, reload) : intro(); };
     const intro = () => MM.mount(box, MM.card('', h('h1', null, test.title), h('p', null, test.description),
       h('div', { class: 'tags' }, h('span', { class: 'tag' }, `${MM.fa(questions.length)} سؤال`), h('span', { class: 'tag' }, `حدود ${MM.fa(test.est_minutes)} دقیقه`)),
-      test.science_note ? h('div', { class: 'notice info' }, h('strong', null, 'مبنای علمی و محدودیت‌ها: '), test.science_note) : null,
+      test.science_note ? h('details', { class: 'card flat' }, h('summary', null, 'درباره‌ی این تست'), h('p', { class: 'small muted', style: 'margin-top:.5rem' }, test.science_note)) : null,
       !MM.token() ? h('div', { class: 'notice' }, 'برای ذخیره‌ی نتیجه باید وارد حساب شوی.') : null,
       MM.btn(Object.keys(saved).length ? 'ادامه‌ی تست' : 'شروع تست', () => { if (!MM.token()) { sessionStorage.setItem('mm_after', location.hash); return MM.go('/login'); } idx = Math.min(Object.keys(saved).length, questions.length - 1); show(); }, 'primary')));
     const show = () => {
@@ -55,13 +55,22 @@
 
   MM.route('/results/:id', 'نتیجه‌ی تست', async ({ params }) => {
     const r = await MM.get('/api/my/results/' + params.id);
-    const sug = r.suggested; const chip = (arr, base) => arr.length ? h('div', { class: 'row' }, arr.map(x => MM.link(x.name, `#/${base}/${x.slug}`, 'btn sm'))) : h('p', { class: 'muted small' }, 'موردی ثبت نشده است.');
-    return h('div', null, MM.link('‹ همه‌ی تست‌ها', '#/tests', 'btn sm'), h('h1', null, 'نتیجه‌ی ' + r.test.title),
-      MM.card('hl', r.categories.map(c => h('div', { class: 'bar-row' }, h('span', { class: 'nm' }, c.title), MM.progress(c.pct)))),
-      MM.card('', h('h2', null, 'دسته‌های برتر تو'), r.categories.filter(c => r.top_codes.includes(c.code)).map(c => h('div', null, h('h3', null, `${c.title}`), h('p', null, c.description)))),
-      r.next_action ? MM.card('', h('h2', null, '👣 اقدام بعدی'), h('p', null, r.next_action)) : null,
+    const sug = r.suggested; const chip = (arr, base) => arr.length ? h('div', { class: 'row' }, arr.map(x => MM.link(x.name, `#/${base}/${x.slug}`, 'btn sm'))) : h('p', { class: 'muted small' }, 'چیزی برای این بخش ثبت نشده.');
+    const top = r.categories[0]; // r.categories از سرور بر اساس درصد مرتب شده
+    const others = r.categories.filter(c => r.top_codes.includes(c.code) && c.code !== top?.code);
+    return h('div', null, MM.link('‹ همه‌ی تست‌ها', '#/tests', 'btn sm'), h('h1', null, r.test.title),
+      top ? MM.card('hl',
+        h('p', { class: 'muted small' }, 'بیشترین همسویی‌ات با این مورد است:'),
+        h('h2', { style: 'margin-top:.2rem' }, top.title),
+        h('p', null, top.description),
+        r.next_action ? h('p', null, h('strong', null, '👣 قدم بعدی: '), r.next_action) : null,
+        others.length ? h('div', { class: 'small muted', style: 'margin-top:.6rem' }, 'موارد دیگری هم که بهت نزدیک‌اند: ' + others.map(c => c.title).join('، ')) : null,
+        r.test.result_note ? h('p', { class: 'small muted', style: 'margin-top:.6rem' }, '💡 ' + r.test.result_note) : null) : null,
+      h('details', { class: 'card' }, h('summary', null, 'دیدن نمره‌ی کامل همه‌ی دسته‌ها'),
+        h('div', { style: 'margin-top:.6rem' }, r.categories.map(c => h('div', { class: 'bar-row' }, h('span', { class: 'nm' }, c.title), MM.progress(c.pct))))),
       MM.card('', h('h2', null, '🎓 رشته‌های پیشنهادی برای بررسی'), chip(sug.majors, 'majors'), h('h2', null, '💼 مشاغل مرتبط'), chip(sug.jobs, 'jobs'), sug.skills.length ? [h('h2', null, '🛠 مهارت‌های پیشنهادی'), h('div', { class: 'tags' }, sug.skills.map(s => h('span', { class: 'tag' }, s.name)))] : null),
-      r.test.result_note ? h('div', { class: 'notice info' }, r.test.result_note) : null,
-      h('div', { class: 'row' }, MM.link('ادامه‌ی مسیر من', '#/my-path', 'btn primary'), MM.link('صحبت با مشاور AI', '#/ai', 'btn'), MM.link('صحبت با متخصص', '#/consult', 'btn')));
+      MM.card('', h('p', null, 'می‌تونی همین حالا این‌ها را در «رشته‌ها» و «مشاغل» بالا بیشتر بخوانی، یا نگاهی به کل مسیرت بیندازی.'),
+        h('div', { class: 'row' }, MM.link('دیدن مسیر کامل من', '#/my-path', 'btn primary')),
+        h('p', { class: 'small muted', style: 'margin-top:.6rem' }, 'اگر سؤالی داری، می‌توانی با ', MM.link('مشاور هوش مصنوعی', '#/ai', 'inline-link'), ' یا ', MM.link('یک متخصص واقعی', '#/consult', 'inline-link'), ' هم صحبت کنی.')));
   }, { auth: true });
 })();
