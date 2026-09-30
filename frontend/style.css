@@ -90,3 +90,5 @@ a.card.link,a.item.link{display:block;color:inherit}a.card.link:hover{border-col
 .msg.err{border:1px solid var(--danger);background:transparent;color:var(--danger)}
 .notice{padding:.6rem .8rem;border-radius:10px;border:1px solid var(--line);background:var(--brand-l)}.notice.warn{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface))}
 .prose p{line-height:1.9}
+summary{cursor:pointer;font-weight:600;color:var(--ink)}summary::marker{color:var(--brand)}
+.inline-link{color:var(--brand);text-decoration:underline;text-underline-offset:2px}
