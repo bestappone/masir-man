@@ -92,6 +92,8 @@
   MM.badge = (text, cls = '') => h('span', { class: 'badge ' + cls }, text);
   MM.progress = (pct, label) => h('div', { class: 'progress', role: 'progressbar', 'aria-valuenow': pct, 'aria-valuemin': 0, 'aria-valuemax': 100 }, h('div', { class: 'bar', style: `width:${Math.min(100, Math.max(0, pct || 0))}%` }), h('span', null, label || (MM.fa(pct || 0) + '٪')));
   MM.card = (cls, ...kids) => h('section', { class: 'card ' + (cls || '') }, kids);
+  // متن مشاوره‌ای: آرایه‌ی [{kind,text}] از سرور را به چند پاراگراف دوستانه تبدیل می‌کند
+  MM.narrative = (items, title) => (items && items.length) ? h('section', { class: 'card hl narr' }, title ? h('h2', null, title) : null, items.map(x => h('p', { class: 'narr-' + (x.kind || 'p') }, x.text))) : null;
   MM.field = (label, input, hint) => h('label', { class: 'field' }, h('span', { class: 'lbl' }, label), input, hint ? h('small', { class: 'muted' }, hint) : null);
   MM.select = (name, options, value) => h('select', { name }, options.map(o => { const [v, t] = Array.isArray(o) ? o : [o, o]; return h('option', { value: v, selected: String(v) === String(value) }, t); }));
   MM.formData = (form) => Object.fromEntries([...new FormData(form).entries()].map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]));

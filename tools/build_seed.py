@@ -31,6 +31,7 @@ S += ins('roles', ['id','code','title','permissions'], [
 S += ins('site_settings', ['setting_key','setting_value','group_name','label','is_public'], SETTINGS)
 S += ins('payment_settings', ['id','card_number','card_owner','bank_name','instructions','rules','min_amount','max_amount','receipt_required'],
  [(1,'0000000000000000','نام صاحب کارت را از پنل مدیر وارد کنید','','مبلغ را کارت‌به‌کارت واریز کن، سپس شماره‌ی پیگیری را در همین صفحه ثبت کن. پس از بررسی، درخواست تو فعال می‌شود.','درخواست پس از تأیید پرداخت و هماهنگی زمان قطعی می‌شود. لغو پس از تأیید با هماهنگی پشتیبانی انجام می‌شود.',10000,100000000,0)])
+S += ins('paid_features', ['feature_key','title','is_paid','price'], [('study_plan','ساخت برنامه (پلنر مطالعه و برنامه‌ی آزمون)',0,0),('konkur_pick','تحلیل و چیدمان انتخاب رشته‌ی کنکور (۱۵۰ انتخاب)',0,0)])
 S += ins('ai_settings', ['id','is_enabled','provider_name','base_url','model','system_prompt','temperature','max_tokens','daily_limit'],
  [(1,0,'OpenAI-compatible','https://api.openai.com/v1','','تو «مشاور AI رایگان» پلتفرم «مسیر من» هستی. به زبان فارسی، ساده، محترمانه و کوتاه پاسخ بده. فقط راهنمایی بده و تصمیم نهایی را به کاربر و خانواده بسپار. تشخیص پزشکی یا روان‌شناختی نده. اگر اطلاعات کافی نداری صادقانه بگو و کاربر را به بخش‌های مرتبط سایت یا متخصص ارجاع بده. از داده‌های ساختاریافته‌ی پلتفرم که در ادامه می‌آید به‌عنوان منبع اصلی استفاده کن.',0.4,700,20)])
 

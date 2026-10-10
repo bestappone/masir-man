@@ -88,12 +88,13 @@
     wrap.appendChild(MM.card('hl', h('h2', null, `مراحل مسیر (${MM.fa(done)} از ${MM.fa(10)})`), h('div', { class: 'steps' }, d.wizard.map(x => h('i', { class: x.done ? 'on' : '' }))),
       h('div', { class: 'tags' }, WSTEPS.map(([k, t], i) => h('span', { class: 'tag', style: d.wizard[i].done ? 'background:var(--brand-l);color:var(--brand)' : '' }, (d.wizard[i].done ? '✓ ' : '') + t))),
       h('div', { class: 'row', style: 'margin-top:.6rem' }, MM.btn('ویزارد ساخت مسیر', () => wizard(wrap, p), 'primary'))));
+    if (p.narrative && p.narrative.length) wrap.appendChild(MM.narrative(p.narrative, '💬 مسیرت، به زبان ساده'));
     if (!p.ready) { wrap.appendChild(MM.card('', h('h2', null, 'اول خودت را بشناس'), h('p', null, p.why), MM.link('شروع تست علاقه', '#/tests/holland-interest', 'btn primary'))); return wrap; }
     wrap.appendChild(pathResult(p)); return wrap;
   });
 
   function pathResult(p) {
-    const w = h('div');
+    const w = h('div'); w.appendChild(h('p', { class: 'muted small' }, 'جزئیات و پیوندهای مسیرت در ادامه آمده است:'));
     w.appendChild(MM.card('', h('h2', null, '🎯 هدف'), h('p', null, p.goal ? p.goal.title : 'هنوز هدفی ثبت نشده — در «کوچ من» هدف بساز.'), h('h2', null, '🧠 علایق'), h('p', null, p.why), h('div', { class: 'tags' }, p.holland.map(c => h('span', { class: 'tag' }, c)))));
     if (p.abilities.length) w.appendChild(MM.card('', h('h2', null, '📊 توانایی‌ها و ویژگی‌ها'), p.abilities.slice(0, 4).map(a => h('div', null, h('strong', { class: 'small' }, a.title), Object.entries(a.scores).slice(0, 6).map(([k, v]) => h('div', { class: 'bar-row' }, h('span', { class: 'nm' }, k), MM.progress(v.pct)))))));
     w.appendChild(MM.card('', h('h2', null, '🎓 رشته‌های پیشنهادی'), p.majors.map(m => h('a', { class: 'item', href: '#/majors/' + m.slug }, h('div', { class: 'grow' }, h('strong', null, m.name), h('p', { class: 'muted small' }, (m.description || '').slice(0, 110))), '‹')),

@@ -27,7 +27,10 @@ export const RES = {
   tests: { label: 'تست‌ها', group: CONTENT, table: 'tests', title: 'title', search: ['title', 'slug'], order: 'sort_order, id', pub: 'is_published',
     fields: { slug: 's!', title: 't!', description: 'x', kind: 'e:likert|ability', est_minutes: 'i', level: 't', science_note: 'x', result_note: 'x', is_paid: 'b', price: 'i', is_published: 'b', sort_order: 'i' } },
   test_categories: { label: 'دسته‌بندی نتیجه‌ی تست', group: CONTENT, table: 'test_categories', title: 'title', search: ['title', 'code'], order: 'test_id, sort_order, id', filters: ['test_id'],
-    fields: { test_id: 'i!', code: 't!', title: 't!', description: 'x', suggested_majors: 't', suggested_jobs: 't', suggested_skills: 't', next_action: 'x', sort_order: 'i' } },
+    fields: { test_id: 'i!', code: 't!', title: 't!', description: 'x', suggested_majors: 't', suggested_jobs: 't', suggested_skills: 't', next_action: 'x', advice_text: 'X', sort_order: 'i' } },
+  konkur_programs: { label: 'رشته‌محل‌های کنکور (انتخاب رشته)', group: CONTENT, table: 'konkur_programs', title: 'field_name', search: ['field_name', 'university', 'code'], order: 'group_name, university, id', filters: ['group_name'],
+    fields: { code: 't!', group_name: 't!', field_name: 't!', university: 't!', city: 't', course_type: 't', major_slug: 't', capacity: 'i', rank_r1: 'i', rank_r2: 'i', rank_r3: 'i', rank_year: 't', is_active: 'b' } },
+
   questions: { label: 'سؤال‌ها', group: CONTENT, table: 'questions', title: 'q_text', search: ['q_text'], order: 'test_id, sort_order, id', filters: ['test_id', 'category_code'],
     fields: { test_id: 'i!', category_code: 't!', q_text: 'x!', level: 't', weight: 'r', sort_order: 'i', is_active: 'b' } },
   options: { label: 'گزینه‌ها و امتیاز', group: CONTENT, table: 'options', title: 'o_text', search: ['o_text'], order: 'question_id, sort_order, id', filters: ['question_id'],

@@ -1,5 +1,5 @@
 // Service Worker ساده: فقط فایل‌های ثابت سایت کش می‌شوند؛ درخواست‌های API هرگز کش نمی‌شوند.
-const V = 'mm-v1'; const CORE = ['./', 'index.html', 'style.css', 'config.js', 'js/core.js', 'js/app.js', 'assets/icon.svg'];
+const V = 'mm-v2'; const CORE = ['./', 'index.html', 'style.css', 'config.js', 'js/core.js', 'js/app.js', 'assets/icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(V).then(c => c.addAll(CORE)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener('fetch', (e) => {

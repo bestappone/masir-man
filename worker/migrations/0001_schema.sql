@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS tests (
   result_note TEXT,
   is_published INTEGER NOT NULL DEFAULT 1,
   sort_order INTEGER NOT NULL DEFAULT 0,
+  is_paid INTEGER NOT NULL DEFAULT 0,
+  price INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -74,6 +76,7 @@ CREATE TABLE IF NOT EXISTS test_categories (
   suggested_jobs TEXT,
   suggested_skills TEXT,
   next_action TEXT,
+  advice_text TEXT,
   sort_order INTEGER NOT NULL DEFAULT 0,
   UNIQUE (test_id, code)
 );
@@ -326,6 +329,7 @@ CREATE TABLE IF NOT EXISTS consultation_requests (
   slot_id INTEGER,
   group_program_id INTEGER,
   package_id INTEGER,
+  product_key TEXT,
   status TEXT NOT NULL DEFAULT 'draft',
   price INTEGER NOT NULL DEFAULT 0,
   discount INTEGER NOT NULL DEFAULT 0,
@@ -336,6 +340,39 @@ CREATE TABLE IF NOT EXISTS consultation_requests (
   admin_note TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ویژگی‌های پولی‌شدنی که آزمون یا مشاور مشخصی نیستند (مثل ساخت برنامه‌ی مطالعه)
+CREATE TABLE IF NOT EXISTS paid_features (
+  feature_key TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  is_paid INTEGER NOT NULL DEFAULT 0,
+  price INTEGER NOT NULL DEFAULT 0
+);
+
+-- داده‌ی رشته‌محل‌های کنکور (آخرین رتبه‌ی قبولی سال‌های قبل؛ مدیر از دفترچه‌ی رسمی وارد می‌کند)
+CREATE TABLE IF NOT EXISTS konkur_programs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT NOT NULL UNIQUE,
+  group_name TEXT NOT NULL,
+  field_name TEXT NOT NULL,
+  university TEXT NOT NULL,
+  city TEXT,
+  course_type TEXT,
+  major_slug TEXT,
+  capacity INTEGER,
+  rank_r1 INTEGER,
+  rank_r2 INTEGER,
+  rank_r3 INTEGER,
+  rank_year TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1
+);
+CREATE INDEX IF NOT EXISTS idx_konkur_group ON konkur_programs(group_name, is_active);
+
+-- ردیابی به‌روزرسانی‌های افزایشی دیتابیس (برای سایت‌هایی که قبلاً راه‌اندازی شده‌اند)
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  name TEXT PRIMARY KEY,
+  applied_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS bookings (

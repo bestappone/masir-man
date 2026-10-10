@@ -25,7 +25,7 @@
     const link = (href, text) => h('a', { href }, text);
     const list = (arr) => arr.map(r => link('#/r/' + r.key, r.label));
     MM.mount(side,
-      h('h4', null, 'عمومی'), link('#/', '📊 داشبورد'), link('#/queue', '✅ صف بررسی'), link('#/setup', '🛠 راه‌اندازی دیتابیس'), link('#/upgrade', '⬆️ به‌روزرسانی دیتابیس'),
+      h('h4', null, 'عمومی'), link('#/', '📊 داشبورد'), link('#/queue', '✅ صف بررسی'), link('#/setup', '🛠 راه‌اندازی دیتابیس'), link('#/upgrade', '⬆️ به‌روزرسانی دیتابیس'), link('#/konkur-import', '🎓 ورود داده‌ی کنکور'),
       h('a', { href: '../' }, '↗ مشاهده‌ی سایت'),
       h('h4', null, 'محتوا'), list(rs.filter(r => r.group === 'content')),
       h('h4', null, 'خدمات و مشاوره'), list(by(SERVICES)),
@@ -89,6 +89,19 @@
     return h('div', { class: 'page narrow' }, h('h1', null, '⬆️ به‌روزرسانی دیتابیس'),
       h('p', { class: 'muted' }, 'وقتی نسخه‌ی جدیدی از کد سایت را جایگزین کردی، اگر تغییری در ساختار دیتابیس لازم باشد، اینجا نشان داده می‌شود. اجرای هرکدام امن است و داده‌های موجود را پاک نمی‌کند؛ می‌توانی چند بار هم روی «اجرا» بزنی.'),
       items.length ? items.map(row) : MM.empty('چیزی برای به‌روزرسانی نیست.'));
+  });
+
+  // ---------- ورود دسته‌جمعی رشته‌محل‌های کنکور ----------
+  page('/konkur-import', 'ورود داده‌ی رشته‌محل‌های کنکور', async () => {
+    if (META.role !== 'admin') return h('div', { class: 'page' }, h('h1', null, 'ورود داده‌ی کنکور'), h('p', { class: 'notice warn' }, 'فقط مدیر به این بخش دسترسی دارد.'));
+    const ta = h('textarea', { rows: 12, dir: 'ltr', placeholder: 'code,group_name,field_name,university,city,course_type,major_slug,capacity,rank_r1,rank_r2,rank_r3,rank_year' });
+    const out = h('div');
+    return h('div', { class: 'page narrow' }, h('h1', null, '🎓 ورود داده‌ی رشته‌محل‌های کنکور'),
+      h('p', { class: 'muted' }, 'داده را از دفترچه‌ی رسمی سازمان سنجش و آمار رتبه‌ی قبولی سال‌های قبل بردار و اینجا بچسبان (CSV؛ ردیف اول سرستون). کد رشته‌محل یکتاست و ورود دوباره‌ی همان کد، ردیف را به‌روز می‌کند. rank_r1 تا rank_r3 آخرین رتبه‌ی قبولی در منطقه‌های ۱ تا ۳ است و major_slug (اختیاری) نشانی رشته‌ی متناظر در سایت است تا با علاقه‌ی کاربر جور شود. هر بار حداکثر ۳۰۰۰ ردیف.'),
+      MM.card('', ta, h('div', { class: 'row', style: 'margin-top:.6rem' }, MM.btn('وارد کن', (e) => MM.busy(e.target, async () => {
+        const r = await MM.post('/api/admin/konkur/import', { csv: ta.value });
+        MM.mount(out, h('p', { class: 'notice' }, `${MM.fa(r.imported)} ردیف وارد/به‌روز شد` + (r.skipped ? `، ${MM.fa(r.skipped)} ردیف ناقص رد شد.` : '.')));
+      }), 'primary'), MM.link('مدیریت تک‌ردیفی', '#/r/konkur_programs', 'btn'), MM.link('پولی/رایگان کردن این بخش', '#/r/paid_features', 'btn')), out));
   });
 
   // ---------- صف بررسی ----------

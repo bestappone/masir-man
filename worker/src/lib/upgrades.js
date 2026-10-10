@@ -33,6 +33,23 @@ export const UPGRADES = [
       "INSERT OR IGNORE INTO paid_features (feature_key, title) VALUES ('study_plan', 'ساخت برنامه (پلنر مطالعه و برنامه‌ی آزمون)')",
     ],
   },
+  {
+    name: 'advice_text_v1',
+    title: 'متن مشاوره‌ای اختیاری برای هر دسته‌ی نتیجه‌ی آزمون (جایگزین توضیح کوتاه در نتیجه)',
+    sql: [
+      "ALTER TABLE test_categories ADD COLUMN advice_text TEXT",
+    ],
+  },
+  {
+    name: 'konkur_pick_v1',
+    title: 'ماژول انتخاب رشته‌ی کنکور (جدول رشته‌محل‌ها + ویژگی پولی/رایگان)',
+    sql: [
+      "CREATE TABLE IF NOT EXISTS konkur_programs (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, group_name TEXT NOT NULL, field_name TEXT NOT NULL, university TEXT NOT NULL, city TEXT, course_type TEXT, major_slug TEXT, capacity INTEGER, rank_r1 INTEGER, rank_r2 INTEGER, rank_r3 INTEGER, rank_year TEXT, is_active INTEGER NOT NULL DEFAULT 1)",
+      "CREATE INDEX IF NOT EXISTS idx_konkur_group ON konkur_programs(group_name, is_active)",
+      "CREATE TABLE IF NOT EXISTS paid_features (feature_key TEXT PRIMARY KEY, title TEXT NOT NULL, is_paid INTEGER NOT NULL DEFAULT 0, price INTEGER NOT NULL DEFAULT 0)",
+      "INSERT OR IGNORE INTO paid_features (feature_key, title, is_paid, price) VALUES ('konkur_pick', 'تحلیل و چیدمان انتخاب رشته‌ی کنکور (۱۵۰ انتخاب)', 0, 0)",
+    ],
+  },
 ];
 
 const IGNORABLE = /duplicate column|already exists/i;

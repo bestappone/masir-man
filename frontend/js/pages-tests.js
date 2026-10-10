@@ -59,16 +59,17 @@
     const top = r.categories[0]; // r.categories از سرور بر اساس درصد مرتب شده
     const others = r.categories.filter(c => r.top_codes.includes(c.code) && c.code !== top?.code);
     return h('div', null, MM.link('‹ همه‌ی تست‌ها', '#/tests', 'btn sm'), h('h1', null, r.test.title),
-      top ? MM.card('hl',
+      MM.narrative(r.narrative, '💬 نتیجه‌ی تو، به زبان ساده'),
+      !(r.narrative && r.narrative.length) && top ? MM.card('hl',
         h('p', { class: 'muted small' }, 'بیشترین همسویی‌ات با این مورد است:'),
         h('h2', { style: 'margin-top:.2rem' }, top.title),
         h('p', null, top.description),
         r.next_action ? h('p', null, h('strong', null, '👣 قدم بعدی: '), r.next_action) : null,
         others.length ? h('div', { class: 'small muted', style: 'margin-top:.6rem' }, 'موارد دیگری هم که بهت نزدیک‌اند: ' + others.map(c => c.title).join('، ')) : null,
         r.test.result_note ? h('p', { class: 'small muted', style: 'margin-top:.6rem' }, '💡 ' + r.test.result_note) : null) : null,
-      h('details', { class: 'card' }, h('summary', null, 'دیدن نمره‌ی کامل همه‌ی دسته‌ها'),
+      h('details', { class: 'card' }, h('summary', null, 'دیدن نمره‌ها و جزئیات عددی'),
         h('div', { style: 'margin-top:.6rem' }, r.categories.map(c => h('div', { class: 'bar-row' }, h('span', { class: 'nm' }, c.title), MM.progress(c.pct))))),
-      MM.card('', h('h2', null, '🎓 رشته‌های پیشنهادی برای بررسی'), chip(sug.majors, 'majors'), h('h2', null, '💼 مشاغل مرتبط'), chip(sug.jobs, 'jobs'), sug.skills.length ? [h('h2', null, '🛠 مهارت‌های پیشنهادی'), h('div', { class: 'tags' }, sug.skills.map(s => h('span', { class: 'tag' }, s.name)))] : null),
+      MM.card('', h('h2', null, '🎓 صفحه‌ی رشته‌هایی که ذکر شد'), chip(sug.majors, 'majors'), h('h2', null, '💼 مشاغل مرتبط'), chip(sug.jobs, 'jobs'), sug.skills.length ? [h('h2', null, '🛠 مهارت‌های پیشنهادی'), h('div', { class: 'tags' }, sug.skills.map(s => h('span', { class: 'tag' }, s.name)))] : null),
       MM.card('', h('p', null, 'می‌تونی همین حالا این‌ها را در «رشته‌ها» و «مشاغل» بالا بیشتر بخوانی، یا نگاهی به کل مسیرت بیندازی.'),
         h('div', { class: 'row' }, MM.link('دیدن مسیر کامل من', '#/my-path', 'btn primary')),
         h('p', { class: 'small muted', style: 'margin-top:.6rem' }, 'اگر سؤالی داری، می‌توانی با ', MM.link('مشاور هوش مصنوعی', '#/ai', 'inline-link'), ' یا ', MM.link('یک متخصص واقعی', '#/consult', 'inline-link'), ' هم صحبت کنی.')));

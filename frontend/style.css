@@ -92,3 +92,5 @@ a.card.link,a.item.link{display:block;color:inherit}a.card.link:hover{border-col
 .prose p{line-height:1.9}
 summary{cursor:pointer;font-weight:600;color:var(--ink)}summary::marker{color:var(--brand)}
 .inline-link{color:var(--brand);text-decoration:underline;text-underline-offset:2px}
+
+.narr p{line-height:2;margin:.2rem 0 .8rem;font-size:1.02rem}.narr p:last-child{margin-bottom:0}.narr .narr-next{background:var(--surface);border-radius:var(--r);padding:.6rem .8rem;border:1px dashed var(--brand)}.narr .narr-closing{color:var(--muted);font-size:.95rem}

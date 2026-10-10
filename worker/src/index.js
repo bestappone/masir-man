@@ -11,6 +11,7 @@ import * as AI from './routes/ai.js';
 import * as Admin from './routes/admin.js';
 import * as Setup from './routes/setup.js';
 import * as Purchases from './routes/purchases.js';
+import * as Konkur from './routes/konkur.js';
 
 const routes = [];
 const add = (method, path, handler) => {
@@ -39,6 +40,7 @@ G('/api/packages', Pub.packages); G('/api/payment-info', Pub.paymentInfo); G('/a
 G('/api/tests', async (c) => { const { all } = await import('./lib/db.js'); return json({ items: await all(c.env, "SELECT t.slug, t.title, t.description, t.kind, t.est_minutes, t.level, t.is_paid, t.price, (SELECT COUNT(*) FROM questions q WHERE q.test_id=t.id AND q.is_active=1) questions FROM tests t WHERE t.is_published=1 ORDER BY t.sort_order, t.id") }); });
 G('/api/tests/:slug', Tests.getTest); P('/api/tests/:slug/submit', Tests.submitTest);
 G('/api/paid-features', async (c) => { const { all } = await import('./lib/db.js'); return json({ items: await all(c.env, 'SELECT feature_key, title, is_paid, price FROM paid_features') }); });
+G('/api/konkur/info', Konkur.info); P('/api/konkur/analyze', Konkur.analyze); P('/api/admin/konkur/import', Konkur.importCsv);
 P('/api/purchases', Purchases.createPurchase); G('/api/purchases/mine', Purchases.myPurchases);
 G('/api/my/results', Tests.myResults); G('/api/my/results/:id', Tests.myResult); D('/api/my/results/:id', Tests.deleteResult);
 // برنامه‌ریزی

@@ -5,6 +5,7 @@ import { cleanFields, need } from '../lib/validate.js';
 import { OWN } from '../resources.js';
 import { createProgramFromTemplate } from '../services/common.js';
 import { rateLimit } from '../lib/limits.js';
+import { pathNarrative } from '../lib/narrative.js';
 
 // ---------- CRUD عمومی برای داده‌های شخصی کاربر (اهداف، اقدام‌ها، Check-in) ----------
 export function ownList(name) {
@@ -105,7 +106,7 @@ export async function path(ctx) {
     first(env, 'SELECT id, title, progress, status FROM goals WHERE user_id=? ORDER BY is_main DESC, id DESC LIMIT 1', u.id),
     first(env, "SELECT id, exam_date FROM study_plans WHERE user_id=? AND status='active' ORDER BY id DESC LIMIT 1", u.id),
     first(env, "SELECT id, title, coach_type FROM coaching_programs WHERE user_id=? AND status='active' ORDER BY id DESC LIMIT 1", u.id),
-    all(env, "SELECT t.slug, t.title, r.scores_json FROM test_results r JOIN tests t ON t.id=r.test_id WHERE r.user_id=? AND t.slug!='holland-interest' ORDER BY r.id DESC LIMIT 12", u.id),
+    all(env, "SELECT t.id test_id, t.slug, t.title, r.scores_json FROM test_results r JOIN tests t ON t.id=r.test_id WHERE r.user_id=? AND t.slug!='holland-interest' ORDER BY r.id DESC LIMIT 12", u.id),
     null,
   ]);
   const chosenMajor = majorsAll.find(m => m.slug === p.chosen_major_slug) || null;
@@ -124,8 +125,19 @@ export async function path(ctx) {
   const provTypes = { counselor: 3, coach: 3, professional: 3, mentor: 3 }; const prov = {};
   for (const t of Object.keys(provTypes)) prov[t] = await all(env, "SELECT id, name, specialty, price FROM providers WHERE status='approved' AND provider_type=? ORDER BY id LIMIT 3", t);
   const why = codes.length ? `بر اساس نتیجه‌ی تست علاقه‌ات، تیپ‌های غالب تو «${codes.slice(0, 3).join(' ')}» هستند. رشته‌ها و شغل‌های زیر با همین تیپ‌ها بیشترین همپوشانی را دارند. این یک نقطه‌ی شروع برای بررسی است، نه حکم نهایی.` : 'هنوز تست علاقه را انجام نداده‌ای؛ با انجام آن، پیشنهادها دقیق‌تر می‌شود.';
+  // نام دسته‌ها برای ساختن متن مشاوره‌ای (بالاترین دسته‌ی هر تست توانایی/ویژگی)
+  const seen = new Set(); const abilNarr = [];
+  const catRows = lastRes.length ? await all(env, `SELECT test_id, code, title FROM test_categories WHERE test_id IN (${qmarks(lastRes.length)})`, ...lastRes.map(r => r.test_id)) : [];
+  for (const r of lastRes) {
+    if (seen.has(r.slug)) continue; seen.add(r.slug);
+    const sc = parseJson(r.scores_json, {}); const best = Object.entries(sc).sort((a, b) => (b[1]?.pct || 0) - (a[1]?.pct || 0))[0];
+    const cat = best && catRows.find(c => c.test_id === r.test_id && c.code === best[0]);
+    if (cat && best[1].pct > 0) abilNarr.push({ title: r.title, topTitle: cat.title });
+  }
+  const goalObj = mainGoal || (p.goal_text ? { title: p.goal_text } : null);
+  const narrative = pathNarrative({ holland: codes, goal: goalObj, chosenMajor, chosenJob, majors, jobs, abilities: abilNarr, planStarted: !!plan, coaching: cprog, grade: p.grade, testsDone: seen.size + (codes.length ? 1 : 0) });
   return json({
-    ready: codes.length > 0, why, holland: codes, goal: mainGoal || (p.goal_text ? { title: p.goal_text } : null),
+    narrative, ready: codes.length > 0, why, holland: codes, goal: mainGoal || (p.goal_text ? { title: p.goal_text } : null),
     majors: majors.map(({ slug, name, description }) => ({ slug, name, description })), jobs: jobs.map(({ slug, name, intro }) => ({ slug, name, intro })),
     key_lessons: keyLessons, skills, path: sel ? { slug: sel.slug, title: sel.title, description: sel.description, steps } : null,
     plan_started: !!plan, coaching: cprog || null, providers: prov,

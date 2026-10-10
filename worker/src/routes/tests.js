@@ -3,6 +3,7 @@ import { all, first, run, batch, prep, multiInsert, parseJson, csv, qmarks } fro
 import { requireUser } from '../lib/auth.js';
 import { rateLimit } from '../lib/limits.js';
 import { hasAccess } from './purchases.js';
+import { testNarrative } from '../lib/narrative.js';
 
 export async function getTest(ctx) {
   const t = await first(ctx.env, 'SELECT id, slug, title, description, kind, est_minutes, level, science_note, result_note, is_paid, price FROM tests WHERE slug=? AND is_published=1', ctx.params.slug);
@@ -56,18 +57,20 @@ export async function buildResult(env, rid, uid) {
   if (!r) throw new HttpError(404, 'نتیجه پیدا نشد.');
   const t = await first(env, 'SELECT slug, title, kind, science_note, result_note FROM tests WHERE id=?', r.test_id);
   const scores = parseJson(r.scores_json, {});
-  const cats = await all(env, 'SELECT code, title, description, suggested_majors, suggested_jobs, suggested_skills, next_action FROM test_categories WHERE test_id=? ORDER BY sort_order, id', r.test_id);
-  const rows = cats.map(c => ({ code: c.code, title: c.title, description: c.description, pct: scores[c.code]?.pct ?? 0, next_action: c.next_action, _m: c.suggested_majors, _j: c.suggested_jobs, _s: c.suggested_skills })).sort((a, b) => b.pct - a.pct);
+  // ستون advice_text بعد از «به‌روزرسانی دیتابیس» وجود دارد؛ روی سایت‌های قدیمی بدون آن هم کار می‌کنیم
+  let cats;
+  try { cats = await all(env, 'SELECT code, title, description, advice_text, suggested_majors, suggested_jobs, suggested_skills, next_action FROM test_categories WHERE test_id=? ORDER BY sort_order, id', r.test_id); }
+  catch { cats = await all(env, 'SELECT code, title, description, suggested_majors, suggested_jobs, suggested_skills, next_action FROM test_categories WHERE test_id=? ORDER BY sort_order, id', r.test_id); }
+  const rows = cats.map(c => ({ code: c.code, title: c.title, description: c.description, advice_text: c.advice_text || '', pct: scores[c.code]?.pct ?? 0, next_action: c.next_action, _m: c.suggested_majors, _j: c.suggested_jobs, _s: c.suggested_skills })).sort((a, b) => b.pct - a.pct);
   const topN = rows.filter(x => x.pct > 0).slice(0, 3);
   // ادغام نوبتی: هر دسته‌ی برتر سهمی از پیشنهادها دارد (نه فقط دسته‌ی اول)
   const mix = (key, cap) => { const lists = topN.map(x => csv(x[key])); const out = []; for (let i = 0; out.length < cap && lists.some(l => i < l.length); i++) for (const l of lists) if (i < l.length && !out.includes(l[i]) && out.length < cap) out.push(l[i]); return out; };
   const majors = mix('_m', 10), jobs = mix('_j', 10), skills = mix('_s', 8);
   const [m, j, s] = await Promise.all([resolve(env, 'majors', majors), resolve(env, 'jobs', jobs), resolve(env, 'skills', skills)]);
-  return {
-    test: t, created_at: r.created_at, top_codes: csv(r.top_codes),
-    categories: rows.map(({ _m, _j, _s, ...x }) => x),
-    next_action: topN[0]?.next_action || '', suggested: { majors: m, jobs: j, skills: s },
-  };
+  const categories = rows.map(({ _m, _j, _s, ...x }) => x);
+  const out = { test: t, created_at: r.created_at, top_codes: csv(r.top_codes), categories, next_action: topN[0]?.next_action || '', suggested: { majors: m, jobs: j, skills: s } };
+  out.narrative = testNarrative(out);
+  return out;
 }
 export async function myResults(ctx) {
   const u = requireUser(ctx);
